@@ -3,7 +3,7 @@ from serial.driver import MKR5Driver
 from schemas import PumpStatusResponse, NozzlesStatusResponse
 
 # Предполагаем, что driver открыт и готов к работе (инициализирован в main.py)
-driver = MKR5Driver(port="COM3", baudrate=9600)
+driver = MKR5Driver(port="/dev/ttyS0", baudrate=9600)
 # ... (в реальном коде driver лучше передавать через зависимость или глобально)
 
 def get_status(pump_id: int) -> PumpStatusResponse:
