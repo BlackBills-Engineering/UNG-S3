@@ -1,5 +1,5 @@
 # serial/driver.py
-import serial
+import serial_io
 import logging
 from utils import calc_crc, bcd_pack, bcd_unpack
 
@@ -12,7 +12,7 @@ class MKR5Driver:
 
     def open(self):
         """Открывает последовательный порт."""
-        self.ser = serial.Serial(self.port_name, self.baudrate, bytesize=8, parity=serial.PARITY_NONE, stopbits=1, timeout=self.timeout)
+        self.ser = serial_io.Serial(self.port_name, self.baudrate, bytesize=8, parity=serial.PARITY_NONE, stopbits=1, timeout=self.timeout)
         logging.info(f"Opened serial port {self.port_name} at {self.baudrate} baud.")
 
     def close(self):

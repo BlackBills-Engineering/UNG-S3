@@ -20,7 +20,7 @@ app = FastAPI(title="Mekser MKR5 Pump API", description="API для управл
 app.include_router(pump.router, prefix="/pumps", tags=["pumps"])
 
 # При старте приложения открываем соединение с COM-портом
-from serial.driver import MKR5Driver
+from serial_io.driver import MKR5Driver
 
 driver = MKR5Driver(port=settings.COM_PORT, baudrate=settings.BAUDRATE)
 driver.open()  # установить соединение
