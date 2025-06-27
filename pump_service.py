@@ -1,10 +1,58 @@
 # services/pump_service.py
+from typing import List
 from driver import MKR5Driver
 from schemas import PumpStatusResponse, NozzlesStatusResponse
+import settings
+from driver import RETURN_STATUS, RETURN_PUMP_PARAMS
+from utils import bcd_pack
+import logging
+
 
 # Предполагаем, что driver открыт и готов к работе (инициализирован в main.py)
-driver = MKR5Driver(port="/dev/ttyS0", baudrate=9600)
-# ... (в реальном коде driver лучше передавать через зависимость или глобально)
+driver = MKR5Driver(settings.COM_PORT, settings.BAUDRATE, settings.TIMEOUT)
+driver.open()
+
+
+def list_pumps() -> List[int]:
+    """
+    Сканирует адреса 0..31 (0x50..0x6F).
+    Возвращает список pump_id, которые ответили хоть на один запрос RETURN_STATUS.
+    """
+    found = []
+    for pid in range(32):
+        try:
+            resp = driver.send_command(pid, dcc=RETURN_STATUS)
+            parsed = driver.parse_response(resp)
+            if "pump_status" in parsed:
+                found.append(pid)
+                logging.debug(f"Pump {pid} found with status {parsed['pump_status']}")
+        except Exception:
+            # ничего не делаем, просто пропускаем «мёртвые» адреса
+            continue
+    return found
+
+
+def list_nozzles(pump_id: int) -> List[int]:
+    """
+    Запрашивает у ТРК pump parameters (DC7) и собирает по grades_mask список пистолетов.
+    """
+    # Сначала проверим, что колонка действительно отвечает
+    resp0 = driver.send_command(pump_id, dcc=RETURN_STATUS)
+    parsed0 = driver.parse_response(resp0)
+    if "pump_status" not in parsed0:
+        raise RuntimeError(f"Pump {pump_id} не отвечает")
+
+    # Теперь запросим параметры колонки (DC7 → RETURN_PUMP_PARAMS)
+    resp = driver.send_command(pump_id, dcc=RETURN_PUMP_PARAMS)
+    parsed = driver.parse_response(resp)
+
+    mask = parsed.get("grades_mask", 0)
+    logging.debug(f"Pump {pump_id} grades_mask = {mask:015b}")
+
+    # Биты 0–14 маски соответствуют доступности пистолетов №1–15
+    nozzles = [i + 1 for i in range(15) if (mask >> i) & 1]
+    logging.info(f"Pump {pump_id} has nozzles: {nozzles}")
+    return nozzles
 
 def get_status(pump_id: int) -> PumpStatusResponse:
     """
@@ -37,7 +85,7 @@ def get_nozzles_status(pump_id: int) -> NozzlesStatusResponse:
     Получение статуса всех пистолетов: фактически также требует запроса Return Status 
     (колонка вернёт информацию о поднятом пистолете и ценах).
     """
-    response = driver.send_command(pump_id, transaction)  # (можно повторно использовать транзакцию Return Status)
+    response = driver.send_command(pump_id, dcc=RETURN_STATUS)  # (можно повторно использовать транзакцию Return Status)
     parsed = driver.parse_response(response)
     if not parsed:
         return None

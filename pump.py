@@ -1,9 +1,22 @@
 # router/pump.py
 from fastapi import APIRouter, HTTPException
 import pump_service
-from schemas import PumpStatusResponse, NozzlesStatusResponse, PriceUpdateRequest, PresetRequest
+from schemas import PumpStatusResponse, NozzlesStatusResponse, PriceUpdateRequest, PresetRequest, PumpList, NozzleList
 
 router = APIRouter()
+
+@router.get("/", response_model=PumpList)
+async def get_all_pumps():
+    pumps = pump_service.list_pumps()
+    return {"pump_ids": pumps}
+
+@router.get("/{pump_id}/nozzles", response_model=NozzleList)
+async def get_pump_nozzles(pump_id: int):
+    try:
+        nos = pump_service.list_nozzles(pump_id)
+        return {"nozzles": nos}
+    except RuntimeError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/{pump_id}/status", response_model=PumpStatusResponse, summary="Получить статус колонки", description="Возвращает текущий статус ТРК (состояние и активный пистолет).")
 def get_pump_status(pump_id: int):

@@ -2,6 +2,12 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
+class PumpList(BaseModel):
+    pump_ids: List[int]
+
+class NozzleList(BaseModel):
+    nozzles: List[int]
+
 class PumpStatusResponse(BaseModel):
     pump_id: int = Field(..., description="Номер колонки")
     status: str = Field(..., description="Состояние колонки (напр. RESET, AUTHORIZED, FILLING и т.д.)")
