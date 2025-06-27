@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
-from router import pump  # наш роутер колонок
-from config import settings
+import pump
+import settings
 import logging
 
 # Инициализация логирования (запись в файл и консоль, уровень DEBUG)
@@ -20,7 +20,7 @@ app = FastAPI(title="Mekser MKR5 Pump API", description="API для управл
 app.include_router(pump.router, prefix="/pumps", tags=["pumps"])
 
 # При старте приложения открываем соединение с COM-портом
-from serial_io.driver import MKR5Driver
+from driver import MKR5Driver
 
 driver = MKR5Driver(port=settings.COM_PORT, baudrate=settings.BAUDRATE)
 driver.open()  # установить соединение

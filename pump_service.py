@@ -1,5 +1,5 @@
 # services/pump_service.py
-from serial_io.driver import MKR5Driver
+from driver import MKR5Driver
 from schemas import PumpStatusResponse, NozzlesStatusResponse
 
 # Предполагаем, что driver открыт и готов к работе (инициализирован в main.py)

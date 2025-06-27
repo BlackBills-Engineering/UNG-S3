@@ -1,6 +1,6 @@
 # router/pump.py
 from fastapi import APIRouter, HTTPException
-from services import pump_service
+import pump_service
 from schemas import PumpStatusResponse, NozzlesStatusResponse, PriceUpdateRequest, PresetRequest
 
 router = APIRouter()
