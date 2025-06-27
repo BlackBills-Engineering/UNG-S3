@@ -56,28 +56,25 @@ def list_nozzles(pump_id: int) -> List[int]:
 
 def get_status(pump_id: int) -> PumpStatusResponse:
     """
-    Запрос статуса колонки: отправляет команду RETURN STATUS и ждёт ответа.
+    Запрос статуса колонки: отправляет команду RETURN_STATUS и ждёт ответа.
     Возвращает объект PumpStatusResponse с полями pump_id, status, active_nozzle и т.д.
     """
-    # Формируем транзакцию команды: CD1 с кодом 0x0 (RETURN STATUS) [oai_citation:19‡file-lfc395pd3vvpi91fm1wkxs](file://file-LFc395PD3vvpi91fm1WKXs#:~:text=)
-    trans_code = 0x01  # CD1
-    dcc_return_status = 0x00  # команда "Return Status"
-    data_bytes = bytes([dcc_return_status])
-    length = len(data_bytes)
-    # Поле длины (LNG) и сами данные
-    transaction = bytes([trans_code, length]) + data_bytes
-    # Отправляем и получаем ответ
-    response = driver.send_command(pump_id, transaction)
+    try:
+        # Просто вызываем send_command с нужным DCC
+        response = driver.send_command(pump_id, dcc=RETURN_STATUS)
+    except Exception as e:
+        raise RuntimeError(f"Pump {pump_id} не отвечает на RETURN_STATUS: {e}")
+
     parsed = driver.parse_response(response)
-    if not parsed:
-        return None
-    # Формируем ответную модель
+    if not parsed or "pump_status" not in parsed:
+        raise RuntimeError(f"Не удалось распарсить ответ колонки {pump_id}")
+
     return PumpStatusResponse(
         pump_id=pump_id,
-        status=parsed.get('pump_status', "UNKNOWN"),
-        active_nozzle=parsed.get('current_nozzle'),
-        volume=parsed.get('current_volume'),
-        amount=parsed.get('current_amount')
+        status=parsed["pump_status"],
+        active_nozzle=parsed.get("current_nozzle"),
+        volume=parsed.get("current_volume"),
+        amount=parsed.get("current_amount")
     )
 
 def get_nozzles_status(pump_id: int) -> NozzlesStatusResponse:
